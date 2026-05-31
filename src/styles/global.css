@@ -1,29 +1,21 @@
 :root {
-  --max-width: 42rem;
+  --max-width: 44rem;
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica,
-    Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Menlo", "Consolas",
-    monospace;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", "JetBrains Mono",
+    Menlo, Consolas, "Liberation Mono", monospace;
 
-  /* light */
-  --bg: #fafafa;
-  --fg: #1a1a1a;
-  --muted: #6b6b6b;
-  --rule: #e4e4e4;
-  --accent: #1a1a1a;
-  --link: #1a1a1a;
-}
+  /* amber-CRT instrument base, warm */
+  --bg: #14120e;
+  --bg-soft: #1b1812;
+  --fg: #e9e1cf;
+  --muted: #948b76;
+  --rule: #2c281f;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #111111;
-    --fg: #e8e8e8;
-    --muted: #9a9a9a;
-    --rule: #2a2a2a;
-    --accent: #ffffff;
-    --link: #e8e8e8;
-  }
+  --amber: #e6a94c; /* primary accent — prompts, links */
+  --amber-dim: #b9863c;
+  --red: #d56353; /* red-pen — marks, annotations, "building" */
+
+  --link: var(--amber);
 }
 
 *,
@@ -33,17 +25,18 @@
 }
 
 html {
-  font-size: 17px;
+  font-size: 16px;
   -webkit-text-size-adjust: 100%;
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: var(--font-sans);
-  line-height: 1.6;
-  font-feature-settings: "kern";
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  line-height: 1.7;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -51,48 +44,47 @@ body {
 .wrap {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 3rem 1.25rem 5rem;
+  padding: 2.5rem 1.25rem 5rem;
 }
 
 /* --- typography --- */
 h1,
 h2,
 h3 {
-  line-height: 1.25;
-  font-weight: 650;
+  line-height: 1.3;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 h1 {
-  font-size: 1.6rem;
-  margin: 0 0 0.25rem;
+  font-size: 1.4rem;
+  margin: 0 0 0.75rem;
 }
 
 h2 {
-  font-size: 1.15rem;
-  margin: 2.5rem 0 0.75rem;
+  font-size: 1.05rem;
+  margin: 2.75rem 0 0.75rem;
 }
 
 p {
   margin: 0 0 1.1rem;
+  max-width: 38rem;
 }
 
 a {
   color: var(--link);
   text-decoration: none;
-  text-underline-offset: 3px;
-  text-decoration-thickness: 1px;
-  border-bottom: 1px solid var(--rule);
-  transition: border-color 0.15s ease;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.12s ease;
 }
 
 a:hover {
-  border-color: var(--fg);
+  border-color: var(--amber-dim);
 }
 
 code {
-  font-family: var(--font-mono);
   font-size: 0.875em;
+  color: var(--amber);
 }
 
 hr {
@@ -105,8 +97,44 @@ hr {
   color: var(--muted);
 }
 
-.mono {
+/* --- terminal command line (the recurring device) --- */
+.cmd {
   font-family: var(--font-mono);
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 1.25rem;
+  letter-spacing: 0;
+}
+
+.cmd .sigil {
+  color: var(--amber);
+}
+
+.cmd .you {
+  color: var(--amber-dim);
+}
+
+/* blinking block cursor */
+.cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  margin-left: 0.15em;
+  background: var(--amber);
+  vertical-align: text-bottom;
+  animation: blink 1.1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor {
+    animation: none;
+  }
 }
 
 /* --- header / nav --- */
@@ -116,20 +144,26 @@ hr {
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-bottom: 3rem;
+  padding-bottom: 1.25rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid var(--rule);
 }
 
 .site-header .brand {
-  font-weight: 650;
-  font-size: 1rem;
+  font-weight: 600;
+  font-size: 0.95rem;
   border: none;
-  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.site-header .brand .sigil {
+  color: var(--amber);
 }
 
 .site-nav {
   display: flex;
-  gap: 1.25rem;
-  font-size: 0.95rem;
+  gap: 1.1rem;
+  font-size: 0.9rem;
 }
 
 .site-nav a {
@@ -137,9 +171,15 @@ hr {
   color: var(--muted);
 }
 
+.site-nav a::before {
+  content: "/";
+  color: var(--rule);
+  margin-right: 0.05rem;
+}
+
 .site-nav a:hover,
 .site-nav a[aria-current="page"] {
-  color: var(--fg);
+  color: var(--amber);
 }
 
 /* --- lists of things (work, writing, apps) --- */
@@ -150,7 +190,7 @@ hr {
 }
 
 .entry-list li {
-  padding: 1rem 0;
+  padding: 1.1rem 0;
   border-top: 1px solid var(--rule);
 }
 
@@ -160,46 +200,75 @@ hr {
 
 .entry-title {
   font-weight: 600;
-  font-size: 1.05rem;
+  font-size: 1rem;
   border: none;
+  color: var(--fg);
+}
+
+a.entry-title:hover {
+  color: var(--amber);
 }
 
 .entry-meta {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--muted);
-  font-family: var(--font-mono);
 }
 
 .entry-desc {
-  margin: 0.35rem 0 0;
+  margin: 0.4rem 0 0;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  max-width: 40rem;
 }
 
+/* mono label + red-pen status badge */
 .badge {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-  border: 1px solid var(--rule);
-  border-radius: 3px;
-  padding: 0.1rem 0.4rem;
+  letter-spacing: 0.08em;
+  color: var(--red);
+  border: 1px solid var(--red);
+  border-radius: 2px;
+  padding: 0.05rem 0.4rem;
   vertical-align: middle;
+  white-space: nowrap;
+}
+
+.label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
 }
 
 /* --- footer --- */
 .site-footer {
   margin-top: 5rem;
-  padding-top: 1.5rem;
+  padding-top: 1.25rem;
   border-top: 1px solid var(--rule);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--muted);
 }
 
+.site-footer .sigil {
+  color: var(--amber-dim);
+}
+
+.site-footer a {
+  color: var(--muted);
+}
+
+.site-footer a:hover {
+  color: var(--amber);
+}
+
 /* --- article body --- */
+article.prose {
+  max-width: 38rem;
+}
+
 article.prose h2 {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
 article.prose img {
@@ -208,9 +277,18 @@ article.prose img {
 }
 
 article.prose pre {
-  background: var(--rule);
+  background: var(--bg-soft);
+  border: 1px solid var(--rule);
   padding: 1rem;
-  border-radius: 4px;
+  border-radius: 3px;
   overflow-x: auto;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+article.prose blockquote {
+  margin: 1.25rem 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--red);
+  color: var(--muted);
 }

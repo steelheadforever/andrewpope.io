@@ -22,6 +22,9 @@ const fmt = (d: Date) =>
 ---
 
 <Base title={post.data.title} description={post.data.description}>
+  <p class="cmd">
+    <span class="you">andrew@pope</span> ~ <span class="sigil">$</span> cat writing/{post.id}.md
+  </p>
   <article class="prose">
     <h1>{post.data.title}</h1>
     <p class="entry-meta">{fmt(post.data.date)}</p>

@@ -3,44 +3,57 @@ import Base from "../layouts/Base.astro";
 ---
 
 <Base>
-  <h1>Andrew Pope</h1>
+  <p class="cmd"><span class="you">andrew@pope</span> ~ <span class="sigil">$</span> whoami</p>
+
+  <h1>Andrew Pope<span class="cursor"></span></h1>
   <p class="muted">
-    Air Force officer. Building toward the intersection of trusted silicon and
-    on-device AI.
+    Air Force officer. I build at the edge of hardware and AI, and write down
+    what I actually learn doing it.
   </p>
 
   <p>
-    I document hard things while I'm learning them — the artifacts are the
-    byproduct. Right now that means a ground-up course on how modern chips work
-    (logic gates up through GPUs and AI accelerators), some on-device inference
-    work, and a tinywhoop flight-controller board built around the STM32G473.
+    Right now I'm teaching myself how modern chips work from the physics up —
+    logic gates to CPUs to AI accelerators — and building a tinywhoop flight
+    controller around an STM32G473 to keep it honest. Alongside that:
+    on-device inference and agentic tooling. I'm early in most of this. I'd
+    rather show the work than claim I've arrived.
   </p>
 
-  <p>
-    I'd rather show the work than claim authority. This is where it lives.
+  <p class="cmd">
+    <span class="you">andrew@pope</span> ~ <span class="sigil">$</span> cat now.txt
   </p>
-
-  <h2>Currently</h2>
   <ul class="entry-list">
     <li>
       <span class="entry-title">Circuit Box</span>
       <span class="badge">building</span>
       <p class="entry-desc">
-        An interactive logic-circuit builder that walks the full ladder of
-        abstraction — from a single gate up to a working 8-bit CPU.
+        An interactive logic-circuit builder that climbs the full ladder of
+        abstraction — one gate up to a working 8-bit CPU.
       </p>
     </li>
     <li>
       <span class="entry-title">Chip course</span>
       <p class="entry-desc">
-        Working through how computers are built from physics up, anchored to
-        real hardware.
+        How computers are built, from physics up — anchored to real hardware,
+        not slides.
       </p>
     </li>
   </ul>
 
-  <p style="margin-top:2rem;">
-    <a href="/work">Work</a> · <a href="/writing">Writing</a> ·
-    <a href="/apps">Apps</a>
+  <p class="cmd">
+    <span class="you">andrew@pope</span> ~ <span class="sigil">$</span> cat why.txt
+  </p>
+  <p>
+    I think we've gotten comfortable being unambitious, and a quiet nihilism is
+    filling the gap. I'm Christian — I don't believe we engineer our way out of
+    every problem we create. But my honest read is simpler than that: if we
+    stay here, we die. So I point my work at the physical bottlenecks between us
+    and a future worth wanting — trusted silicon, on-device intelligence, and
+    eventually getting off this planet.
+  </p>
+
+  <p class="muted" style="margin-top:2rem;">
+    <a href="/work">work</a> · <a href="/writing">writing</a> ·
+    <a href="/apps">apps</a>
   </p>
 </Base>
