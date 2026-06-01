@@ -4,9 +4,38 @@ import Base from "../layouts/Base.astro";
 const apps = [
   {
     title: "Circuit Box",
+    meta: "in-browser",
     status: "building",
-    desc: "Build a computer from nothing. Each level unlocks the last one's parts as black boxes — gate → NAND-universal → adder → flip-flop → register → ALU → a working 8-bit CPU.",
     href: undefined,
+    desc: "An interactive logic-circuit builder that climbs the full ladder of abstraction — one gate up to a working 8-bit CPU. Hands-on learning as I work through the computing course.",
+  },
+  {
+    title: "Audiary",
+    meta: "iOS · text-to-speech",
+    status: undefined,
+    href: "https://workingmodel.cc/audiary",
+    desc: "Natural-sounding text-to-speech with Kokoro neural voices running on the Apple Neural Engine — fully on-device, no servers, no subscription. Share in an article, a webpage, a PDF, or your own notes and it reads them back, with real-time word highlighting and chapter navigation; Apple's system voices are there too, for when you want minimal battery draw. I built it because the good voices were all cloud-locked, and listening to your own documents shouldn't mean uploading them to someone else's machine.",
+  },
+  {
+    title: "MoarPixels",
+    meta: "iOS · image upscaling",
+    status: undefined,
+    href: "https://workingmodel.cc/moarpixels",
+    desc: "Upscales photos 4× per pass with an ESRGAN model, running on-device through Core ML — stack passes for up to 16× and print at poster size. No upload, no server, no ads. Same thesis as Audiary: the model runs on your phone, and your pictures never leave it.",
+  },
+  {
+    title: "Phantom Ops",
+    meta: "web · mission planning",
+    status: undefined,
+    href: "https://phantom-ops.net",
+    desc: "A mission-planning and familiarization tool for USAF RPA students. It mirrors the map controls of an air-gapped simulator so aircrew can plan a sortie in a normal browser and carry the plan across. Built straight from the training need — the sim is isolated by design, which makes planning on it painful.",
+  },
+  {
+    title: "Slackwater",
+    meta: "web · tides + weather",
+    status: undefined,
+    href: "https://slackwater.app",
+    desc: "Tides and weather for the Texas coast in one place — everything a fisherman wants to check before heading out, without bouncing between five apps and a NOAA page. A small, useful thing I wanted to exist.",
   },
 ];
 
@@ -20,22 +49,30 @@ const ideas = [
 
 <Base
   title="Apps"
-  description="Interactive, in-browser tools by Andrew Pope — each a public artifact of something I'm learning."
+  description="Interactive tools and shipped apps by Andrew Pope — most of them on-device, all of them things I wanted to exist."
 >
   <p class="cmd">
     <span class="you">andrew@pope</span> ~ <span class="sigil">$</span> ls apps/
   </p>
   <h1>Apps</h1>
   <p class="muted">
-    Interactive tools, each a public artifact of something I'm learning.
+    Things I've built — most of them on-device, all of them things I wanted to
+    exist.
   </p>
 
   <ul class="entry-list">
     {
       apps.map((a) => (
         <li>
-          <span class="entry-title">{a.title}</span>{" "}
-          <span class="badge">{a.status}</span>
+          {a.href ? (
+            <a href={a.href} class="entry-title">
+              {a.title}
+            </a>
+          ) : (
+            <span class="entry-title">{a.title}</span>
+          )}{" "}
+          {a.status && <span class="badge">{a.status}</span>}
+          <span class="entry-meta"> — {a.meta}</span>
           <p class="entry-desc">{a.desc}</p>
         </li>
       ))
