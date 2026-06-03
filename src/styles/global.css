@@ -241,6 +241,14 @@ a.entry-title:hover {
   color: var(--muted);
 }
 
+/* [hw] / [sw] medium tag */
+.tag {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--amber-dim);
+  letter-spacing: 0.02em;
+}
+
 /* --- footer --- */
 .site-footer {
   margin-top: 5rem;

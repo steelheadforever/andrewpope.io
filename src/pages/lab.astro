@@ -1,0 +1,63 @@
+---
+import Base from "../layouts/Base.astro";
+
+const experiments = [
+  {
+    title: "Circuit Box",
+    status: "building",
+    href: undefined,
+    desc: "An interactive logic-circuit builder that climbs the full ladder of abstraction — one gate up to a working 8-bit CPU. Hands-on learning as I work through the computing course.",
+  },
+];
+
+const ideas = [
+  "FPGA Playground",
+  "Trust Stack BOM Visualizer",
+  "On-Device Inference Explorer",
+  "PCB Design Notebook (tinywhoop board)",
+];
+---
+
+<Base
+  title="Lab"
+  description="Interactive tools you can run right in the browser — each one a public artifact of something Andrew Pope is learning."
+>
+  <p class="cmd">
+    <span class="you">andrew@pope</span> ~ <span class="sigil">$</span> ls lab/
+  </p>
+  <h1>Lab</h1>
+  <p class="muted">
+    Interactive tools you can run right in the browser — each one a public
+    artifact of something I'm learning.
+  </p>
+
+  <ul class="entry-list">
+    {
+      experiments.map((e) => (
+        <li>
+          {e.href ? (
+            <a href={e.href} class="entry-title">
+              {e.title}
+            </a>
+          ) : (
+            <span class="entry-title">{e.title}</span>
+          )}{" "}
+          {e.status && <span class="badge">{e.status}</span>}
+          <p class="entry-desc">{e.desc}</p>
+        </li>
+      ))
+    }
+  </ul>
+
+  <h2>On the bench</h2>
+  <ul class="entry-list">
+    {
+      ideas.map((i) => (
+        <li>
+          <span class="entry-title">{i}</span>{" "}
+          <span class="entry-meta">— idea</span>
+        </li>
+      ))
+    }
+  </ul>
+</Base>
