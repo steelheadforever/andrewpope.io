@@ -1,0 +1,9 @@
+{
+  // Cloudflare Workers config — serves the static Astro build in ./dist.
+  // No "main" field: this is a purely static site, so no Worker code runs.
+  "name": "andrewpope-io",
+  "compatibility_date": "2026-06-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}
