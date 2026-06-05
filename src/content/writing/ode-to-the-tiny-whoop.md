@@ -5,9 +5,11 @@ date: 2026-06-02
 draft: false
 ---
 
+![Close-up of a modern brushless Tiny Whoop: ducted props, an all-in-one flight board, and an HD camera, sitting on a wooden desk.](./images/tiny-whoop.jpg)
+
 Remember a piece of technology that gave you an absolute sense of marvel? That *how is this possible* feeling? One particularly formative one for me was in the spring of 2017. My first Tiny Whoop flight. Just what is a Tiny Whoop? Tiny Whoops are small quadcopters that probably belong more in the category of kid's toy than anything else. But this diminutive little drone is truly a marvel of hardware and software.
 
-Why? It's the smallest quadcopter that offers a first person view (FPV) experience. It's a sub-20 gram aircraft that transmits a feed from the aircraft's perspective as you zip around your house, your garage, a park, the mall, etc. Which leads to another great aspect: thanks to the Tiny Whoop's micro proportions, it's far more friendly to fly in these spaces and minimally dangerous to people/animals/stuff. Whoops are also pretty cheap in an otherwise expensive hobby. You can start flying for less than $200. They're pretty tough too, capable of some bonks on furniture or walls thanks to the ducted props without damage to the object or the drone (within reason). 
+Why? It's the smallest quadcopter that offers a first person view (FPV) experience. It's a sub-20 gram aircraft that transmits a feed from the aircraft's perspective as you zip around your house, your garage, a park, the mall, etc. Which leads to another great aspect: thanks to the Tiny Whoop's micro proportions, it's far more friendly to fly in these spaces and minimally dangerous to people/animals/stuff. Whoops are also pretty cheap in an otherwise expensive hobby. You can start flying for less than $200. They're pretty tough too, capable of some bonks on furniture or walls (thanks to the ducted props) without damage to the object or the drone, within reason. 
 
 That first flying experience was transformative. Even though the video was a sometimes glitchy analog signal, the sense of freedom and wonder was *everything*. I saw the world through a brand new perspective, more like a sparrow than anything else. Along the way, Tiny Whoops gave me a fantastic introductory education to micro-electronics, digital and analog signals, firmware, CLI, the list goes on. 
 
