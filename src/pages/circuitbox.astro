@@ -1,0 +1,130 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base
+  title="Circuit Box"
+  description="An interactive logic-circuit breadboard — place gates, wire them together, and watch the signal light the wires. Built in the spirit of open learning."
+>
+  <p class="cmd">
+    <span class="you">andrew@pope</span> ~ <span class="sigil">$</span> ./circuitbox
+  </p>
+  <h1>Circuit Box</h1>
+  <p class="muted">
+    A digital breadboard. Add gates from the rack, drag from an output pin (right
+    side) to an input pin (left side) to wire them, and click an <code>IN</code> to
+    toggle it. Current glows amber. This is the open sandbox — the abstraction
+    ladder up toward a working CPU comes next.
+  </p>
+
+  <section class="breadboard" aria-label="Logic circuit breadboard">
+    <div class="cb-toolbar">
+      <span class="cb-rack-label">add:</span>
+      <button type="button" data-kind="INPUT">IN</button>
+      <button type="button" data-kind="AND">AND</button>
+      <button type="button" data-kind="OR">OR</button>
+      <button type="button" data-kind="NOT">NOT</button>
+      <button type="button" data-kind="OUTPUT">OUT</button>
+      <span class="cb-spacer"></span>
+      <button type="button" id="cb-clear" class="cb-ghost">clear</button>
+    </div>
+    <canvas id="cb-canvas"></canvas>
+  </section>
+
+  <p class="muted cb-hint">
+    Select a gate or wire and press <kbd>Delete</kbd> to remove it.
+  </p>
+</Base>
+
+<style>
+  /* full-bleed: escape the 44rem reading column for the workspace */
+  .breadboard {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-top: 1.75rem;
+    padding: 0 1.25rem;
+  }
+
+  .cb-toolbar {
+    max-width: 1500px;
+    margin: 0 auto 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .cb-rack-label {
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin-right: 0.15rem;
+  }
+
+  .cb-toolbar button {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--amber);
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.28rem 0.7rem;
+    cursor: pointer;
+    transition:
+      border-color 0.12s ease,
+      color 0.12s ease,
+      background 0.12s ease;
+  }
+  .cb-toolbar button:hover {
+    border-color: var(--amber-dim);
+  }
+  .cb-toolbar button:active {
+    color: var(--bg);
+    background: var(--amber);
+  }
+
+  .cb-spacer {
+    flex: 1;
+  }
+  .cb-ghost {
+    color: var(--muted) !important;
+  }
+  .cb-ghost:hover {
+    color: var(--red) !important;
+    border-color: var(--red) !important;
+  }
+
+  canvas#cb-canvas {
+    display: block;
+    width: 100%;
+    max-width: 1500px;
+    height: min(82vh, 900px);
+    margin: 0 auto;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    touch-action: none; /* let pointer drags work without scrolling */
+  }
+
+  .cb-hint {
+    margin-top: 0.9rem;
+    font-size: 0.8rem;
+  }
+  .cb-hint kbd {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0 0.3rem;
+    color: var(--fg);
+  }
+
+  /* 100vw breakout can add a sliver of horizontal scroll when a scrollbar is
+     present; clip it for this page only. */
+  :global(body) {
+    overflow-x: hidden;
+  }
+</style>
+
+<script>
+  import "../circuitbox/main.ts";
+</script>
