@@ -7,9 +7,16 @@
 // a CPU), a clock edge simply becomes the moment we sample, and feedback loops
 // settle through this exact same iteration — with the oscillation detection
 // below already in place. The evaluator generalizes; it does not get rewritten.
+//
+// CHIP nodes evaluate by recursively settling their internal sub-circuit: the
+// chip's input values drive the internal INPUT nodes, and its outputs read the
+// internal OUTPUT nodes. This recursion is depth-guarded.
 
-import type { Circuit, NodeId, PinRef } from "./types";
-import { gateDef } from "./gates";
+import type { Circuit, Node, NodeId, PinRef } from "./types";
+import { gateDef, portsOf } from "./gates";
+import { getChip } from "./chips";
+
+const MAX_CHIP_DEPTH = 64;
 
 /** Map key for an output pin's value. */
 function outKey(node: NodeId, port: number): string {
@@ -24,15 +31,19 @@ export interface SimResult {
 }
 
 export function simulate(circuit: Circuit): SimResult {
+  return settle(circuit, 0);
+}
+
+function settle(circuit: Circuit, depth: number): SimResult {
   const outValues = new Map<string, boolean>();
 
-  // Pre-build, per node, the wire feeding each of its input ports (or null).
-  // Avoids an O(wires) scan inside the settle loop.
+  // Pre-build, per node, the wire feeding each input port (or null), and seed
+  // every output pin to false. Avoids an O(wires) scan inside the settle loop.
   const inWires = new Map<NodeId, Array<PinRef | null>>();
   for (const node of circuit.nodes.values()) {
-    const def = gateDef(node.kind);
-    inWires.set(node.id, new Array(def.inPorts).fill(null));
-    for (let p = 0; p < def.outPorts; p++) {
+    const ports = portsOf(node);
+    inWires.set(node.id, new Array(ports.inPorts).fill(null));
+    for (let p = 0; p < ports.outPorts; p++) {
       outValues.set(outKey(node.id, p), false);
     }
   }
@@ -49,15 +60,18 @@ export function simulate(circuit: Circuit): SimResult {
   for (let pass = 0; pass < maxPasses; pass++) {
     let changed = false;
     for (const node of circuit.nodes.values()) {
-      const def = gateDef(node.kind);
+      const ports = portsOf(node);
       const slots = inWires.get(node.id) ?? [];
       const inputs: boolean[] = [];
-      for (let p = 0; p < def.inPorts; p++) {
+      for (let p = 0; p < ports.inPorts; p++) {
         const src = slots[p];
         inputs.push(src ? (outValues.get(outKey(src.node, src.port)) ?? false) : false);
       }
-      const outs = def.eval(inputs, node);
-      for (let p = 0; p < def.outPorts; p++) {
+      const outs =
+        node.kind === "CHIP"
+          ? evalChip(node, inputs, depth)
+          : gateDef(node.kind).eval(inputs, node);
+      for (let p = 0; p < ports.outPorts; p++) {
         const key = outKey(node.id, p);
         const next = outs[p] ?? false;
         if (outValues.get(key) !== next) {
@@ -73,6 +87,19 @@ export function simulate(circuit: Circuit): SimResult {
   }
 
   return { outValues, oscillating };
+}
+
+/** Evaluate a CHIP by driving its internal INPUT nodes and settling the sub-circuit. */
+function evalChip(node: Node, inputs: boolean[], depth: number): boolean[] {
+  const def = node.chip !== undefined ? getChip(node.chip) : undefined;
+  if (!def) return [];
+  if (depth >= MAX_CHIP_DEPTH) return def.outputs.map(() => false);
+  def.inputs.forEach((pin, i) => {
+    const inNode = def.circuit.nodes.get(pin.node);
+    if (inNode) inNode.state = inputs[i] ?? false;
+  });
+  const res = settle(def.circuit, depth + 1);
+  return def.outputs.map((pin) => inputValue(def.circuit, res, { node: pin.node, port: 0 }));
 }
 
 /** Value of a specific output pin (false if unknown). */

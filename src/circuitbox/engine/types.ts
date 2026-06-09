@@ -10,9 +10,9 @@
 
 export type NodeId = string;
 export type WireId = string;
+export type ChipId = string;
 
-export type GateKind = "INPUT" | "OUTPUT" | "AND" | "OR" | "NOT";
-// future: | "CHIP"
+export type GateKind = "INPUT" | "OUTPUT" | "AND" | "OR" | "NOT" | "CHIP";
 
 export interface Node {
   id: NodeId;
@@ -21,6 +21,8 @@ export interface Node {
   y: number;
   /** INPUT nodes hold their toggle state here; unused by other kinds. */
   state?: boolean;
+  /** CHIP nodes reference a registered ChipDef whose sub-circuit defines them. */
+  chip?: ChipId;
 }
 
 /**

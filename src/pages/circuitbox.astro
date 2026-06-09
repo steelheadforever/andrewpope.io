@@ -28,11 +28,36 @@ import Base from "../layouts/Base.astro";
       <span class="cb-spacer"></span>
       <button type="button" id="cb-clear" class="cb-ghost">clear</button>
     </div>
+
+    <div class="cb-toolbar">
+      <span class="cb-rack-label">chips:</span>
+      <span id="cb-chips" class="cb-chips"></span>
+    </div>
+
+    <div class="cb-toolbar cb-author" hidden>
+      <span class="cb-rack-label">author:</span>
+      <input
+        id="cb-chip-name"
+        class="cb-input"
+        type="text"
+        placeholder="name"
+        maxlength="16"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button type="button" id="cb-makechip">make chip</button>
+      <span class="cb-sep"></span>
+      <button type="button" id="cb-export">export</button>
+      <button type="button" id="cb-import">import</button>
+      <span class="cb-spacer"></span>
+      <span id="cb-msg" class="cb-msg"></span>
+    </div>
     <canvas id="cb-canvas"></canvas>
   </section>
 
   <p class="muted cb-hint">
-    Select a gate or wire and press <kbd>Delete</kbd> to remove it.
+    Marquee-drag to select, <kbd>Shift</kbd>-click to add/remove. <kbd>Delete</kbd>
+    removes the selection. Click a saved chip to place it.
   </p>
 </Base>
 
@@ -91,6 +116,54 @@ import Base from "../layouts/Base.astro";
   .cb-ghost:hover {
     color: var(--red) !important;
     border-color: var(--red) !important;
+  }
+
+  .cb-chips {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .cb-chips:empty::before {
+    content: "none yet — build one →";
+    color: var(--rule);
+    font-size: 0.8rem;
+  }
+
+  .cb-input {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--fg);
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.28rem 0.55rem;
+    width: 8rem;
+  }
+  .cb-input:focus {
+    outline: none;
+    border-color: var(--amber-dim);
+  }
+  .cb-input::placeholder {
+    color: var(--muted);
+  }
+
+  .cb-msg {
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  /* author-only row: hidden until main.ts detects author mode. The explicit
+     rule is needed because .cb-toolbar sets display:flex, which would override
+     the [hidden] user-agent style. */
+  .cb-author[hidden] {
+    display: none;
+  }
+
+  .cb-sep {
+    width: 1px;
+    align-self: stretch;
+    background: var(--rule);
+    margin: 0 0.35rem;
   }
 
   canvas#cb-canvas {

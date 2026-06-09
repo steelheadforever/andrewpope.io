@@ -5,6 +5,10 @@
 // no change to circuit.ts or simulate.ts.
 
 import type { GateKind, Node } from "./types";
+import { getChip } from "./chips";
+
+/** The built-in gate kinds (everything except composite CHIP). */
+export type PrimitiveKind = Exclude<GateKind, "CHIP">;
 
 export interface GateDef {
   kind: GateKind;
@@ -21,7 +25,7 @@ export interface GateDef {
   eval(inputs: boolean[], node: Node): boolean[];
 }
 
-export const GATE_DEFS: Record<GateKind, GateDef> = {
+export const GATE_DEFS: Record<PrimitiveKind, GateDef> = {
   INPUT: {
     kind: "INPUT",
     label: "IN",
@@ -59,8 +63,33 @@ export const GATE_DEFS: Record<GateKind, GateDef> = {
   },
 };
 
-export function gateDef(kind: GateKind): GateDef {
+export function gateDef(kind: PrimitiveKind): GateDef {
   return GATE_DEFS[kind];
+}
+
+export interface Ports {
+  inPorts: number;
+  outPorts: number;
+  label: string;
+}
+
+/**
+ * Port counts + label for a node, resolving CHIP nodes through the registry
+ * (whose interface defines their pins). Primitives read GATE_DEFS. Use this
+ * everywhere geometry/render/validation needs a node's shape — gateDef() alone
+ * can't describe a chip.
+ */
+export function portsOf(node: Node): Ports {
+  if (node.kind === "CHIP") {
+    const def = node.chip !== undefined ? getChip(node.chip) : undefined;
+    return {
+      inPorts: def?.inputs.length ?? 0,
+      outPorts: def?.outputs.length ?? 0,
+      label: def?.name ?? "?",
+    };
+  }
+  const d = GATE_DEFS[node.kind];
+  return { inPorts: d.inPorts, outPorts: d.outPorts, label: d.label };
 }
 
 /** Kinds offered in the palette, in display order. */

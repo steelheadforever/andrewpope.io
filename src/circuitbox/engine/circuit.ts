@@ -3,7 +3,7 @@
 // port indices) live in one place.
 
 import type { Circuit, GateKind, Node, NodeId, PinRef, Wire, WireId } from "./types";
-import { gateDef } from "./gates";
+import { portsOf } from "./gates";
 
 let nodeSeq = 0;
 let wireSeq = 0;
@@ -48,8 +48,8 @@ export function addWire(circuit: Circuit, from: PinRef, to: PinRef): Wire | null
   const toNode = circuit.nodes.get(to.node);
   if (!fromNode || !toNode) return null;
   if (from.node === to.node) return null; // no self-loops in Phase 1
-  if (from.port < 0 || from.port >= gateDef(fromNode.kind).outPorts) return null;
-  if (to.port < 0 || to.port >= gateDef(toNode.kind).inPorts) return null;
+  if (from.port < 0 || from.port >= portsOf(fromNode).outPorts) return null;
+  if (to.port < 0 || to.port >= portsOf(toNode).inPorts) return null;
   if (isInputDriven(circuit, to)) return null;
   const wire: Wire = { id: makeWireId(), from, to };
   circuit.wires.push(wire);

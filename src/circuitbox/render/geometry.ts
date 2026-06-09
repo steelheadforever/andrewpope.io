@@ -7,7 +7,7 @@
 // transform here and nothing else needs to change.
 
 import type { Circuit, Node, NodeId, Wire, WireId } from "../engine/types";
-import { gateDef } from "../engine/gates";
+import { portsOf } from "../engine/gates";
 
 export interface Point {
   x: number;
@@ -27,22 +27,24 @@ export const PIN_HIT_R = 12;
 const WIRE_HIT_DIST = 6;
 
 export function nodeRect(node: Node): Rect {
-  return {
-    x: node.x - NODE_W / 2,
-    y: node.y - NODE_H / 2,
-    w: NODE_W,
-    h: NODE_H,
-  };
+  if (node.kind === "CHIP") {
+    const ports = portsOf(node);
+    const rows = Math.max(ports.inPorts, ports.outPorts, 1);
+    const w = Math.max(NODE_W, 24 + ports.label.length * 8.5);
+    const h = Math.max(NODE_H, 14 + rows * 18);
+    return { x: node.x - w / 2, y: node.y - h / 2, w, h };
+  }
+  return { x: node.x - NODE_W / 2, y: node.y - NODE_H / 2, w: NODE_W, h: NODE_H };
 }
 
 export function inPinPos(node: Node, port: number): Point {
-  const n = gateDef(node.kind).inPorts;
+  const n = portsOf(node).inPorts;
   const r = nodeRect(node);
   return { x: r.x, y: r.y + (r.h * (port + 1)) / (n + 1) };
 }
 
 export function outPinPos(node: Node, port: number): Point {
-  const n = gateDef(node.kind).outPorts;
+  const n = portsOf(node).outPorts;
   const r = nodeRect(node);
   return { x: r.x + r.w, y: r.y + (r.h * (port + 1)) / (n + 1) };
 }
@@ -191,7 +193,7 @@ export function hitTest(circuit: Circuit, p: Point): Hit {
 
   for (let i = nodes.length - 1; i >= 0; i--) {
     const node = nodes[i];
-    const def = gateDef(node.kind);
+    const def = portsOf(node);
     for (let port = 0; port < def.outPorts; port++) {
       const pos = outPinPos(node, port);
       if (dist2(p, pos) <= PIN_HIT_R * PIN_HIT_R)

@@ -22,3 +22,6 @@ pnpm-debug.log*
 # editors
 .vscode/
 .idea/
+
+# browser-automation scratch (screenshots, console logs, test downloads)
+.playwright-mcp/

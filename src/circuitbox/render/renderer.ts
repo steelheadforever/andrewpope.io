@@ -5,7 +5,7 @@
 // dark and quiet, with amber glow reserved for live current — the only light.
 
 import type { Circuit, Node, NodeId, WireId } from "../engine/types";
-import { gateDef } from "../engine/gates";
+import { portsOf } from "../engine/gates";
 import type { SimResult } from "../engine/simulate";
 import { inputValue, pinValue } from "../engine/simulate";
 import type { Theme } from "../theme";
@@ -25,10 +25,13 @@ const GRID = 22;
 const GLOW = 9;
 const CORNER_R = 6; // rounding on orthogonal wire bends
 
-export type Selection =
-  | { type: "node"; id: NodeId }
-  | { type: "wire"; id: WireId }
-  | null;
+/** The in-progress marquee selection box, in canvas coords. */
+export interface Marquee {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
 
 export interface PendingWire {
   from: Point;
@@ -46,9 +49,11 @@ export interface HoverPin {
 export interface RenderState {
   circuit: Circuit;
   sim: SimResult;
-  selection: Selection;
+  selectedNodes: Set<NodeId>;
+  selectedWire: WireId | null;
   pendingWire: PendingWire | null;
   hoverPin: HoverPin | null;
+  marquee: Marquee | null;
 }
 
 export class Renderer {
@@ -89,7 +94,7 @@ export class Renderer {
       const path = wireRenderPath(state.circuit, w);
       if (path.length < 2) continue;
       const live = pinValue(state.sim, w.from);
-      const selected = state.selection?.type === "wire" && state.selection.id === w.id;
+      const selected = state.selectedWire === w.id;
       this.drawWire(path, live, selected);
       if (w.tapOf !== undefined) this.drawJunction(path[0], live);
     }
@@ -99,6 +104,26 @@ export class Renderer {
     for (const node of state.circuit.nodes.values()) {
       this.drawNode(node, state);
     }
+
+    if (state.marquee) this.drawMarquee(state.marquee);
+  }
+
+  private drawMarquee(m: Marquee): void {
+    const { ctx, theme } = this;
+    const x = Math.min(m.x0, m.x1);
+    const y = Math.min(m.y0, m.y1);
+    const w = Math.abs(m.x1 - m.x0);
+    const h = Math.abs(m.y1 - m.y0);
+    ctx.save();
+    ctx.fillStyle = theme.amber;
+    ctx.globalAlpha = 0.06;
+    ctx.fillRect(x, y, w, h);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = theme.amberDim;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.restore();
   }
 
   private drawGrid(): void {
@@ -161,9 +186,9 @@ export class Renderer {
 
   private drawNode(node: Node, state: RenderState): void {
     const { ctx, theme } = this;
-    const def = gateDef(node.kind);
+    const def = portsOf(node);
     const r = nodeRect(node);
-    const selected = state.selection?.type === "node" && state.selection.id === node.id;
+    const selected = state.selectedNodes.has(node.id);
 
     // Source/sink nodes act as lamps: lit when carrying a 1.
     let lit = false;
