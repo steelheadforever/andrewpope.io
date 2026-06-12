@@ -1,11 +1,58 @@
 ---
 import Base from "../layouts/Base.astro";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("writing", ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 10);
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 ---
 
 <Base>
   <p class="cmd"><span class="you">andrew@pope</span> ~ <span class="sigil">$</span> whoami</p>
 
   <h1>Andrew Pope<span class="cursor"></span></h1>
+  <p class="muted">
+    amateur artificer | bounded rationalist | perennial tinkerer
+  </p>
+
+  <p class="cmd">
+    <span class="you">andrew@pope</span> ~ <span class="sigil">$</span> ls latest/
+  </p>
+  {
+    posts.length === 0 ? (
+      <p class="muted">Nothing published yet.</p>
+    ) : (
+      <ul class="entry-list">
+        {posts.map((post) => (
+          <li>
+            <a href={`/writing/${post.id}`} class="entry-title">
+              {post.data.title}
+            </a>
+            <span class="entry-meta"> — {fmt(post.data.date)}</span>
+            {post.data.description && (
+              <p class="entry-desc">{post.data.description}</p>
+            )}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  <p class="muted" style="margin-top:2rem;">
+    Go deeper: <a href="/projects">projects</a> | <a href="/lab">lab</a> |
+    <a href="/writing">writing</a>
+  </p>
+
+  <p class="cmd" style="margin-top:2.5rem;">
+    <span class="you">andrew@pope</span> ~ <span class="sigil">$</span> cat about.txt
+  </p>
   <p class="muted">
     I'm deeply curious about how things work, and I've always loved fixing
     them. In my day job I'm an Air Force RPA pilot, teaching new lieutenants to
@@ -15,17 +62,17 @@ import Base from "../layouts/Base.astro";
   </p>
 
   <p>
-    Currently I've been revisiting semiconductors and basic computers. I plan to go as far into this rabbit hole as my self-guided education will take me. I love finding ways where the world of software collides with hardware and engineering constraints. I've got a few cool projects in mind and there's never been a better time to learn and build. 
+    Currently I've been revisiting semiconductors and basic computers. I plan to go as far into this rabbit hole as my self-guided education will take me. I love finding ways where the world of software collides with hardware and engineering constraints. I've got a few cool projects in mind and there's never been a better time to learn and build.
   </p>
 
   <p class="cmd">
     <span class="you">andrew@pope</span> ~ <span class="sigil">$</span> cat now.txt
   </p>
-  <ul class="entry-list">   
+  <ul class="entry-list">
     <li>
       <span class="entry-title">Basic Computing</span>
       <p class="entry-desc">
-        Sometimes when I build other apps, I've found myself wondering what's going on down there at the bare metal layer. This is my inquiry into just that: how do computers work? And in learning, what can I apply to other projects? 
+        Sometimes when I build other apps, I've found myself wondering what's going on down there at the bare metal layer. This is my inquiry into just that: how do computers work? And in learning, what can I apply to other projects?
       </p>
     </li>
     <li>
@@ -38,7 +85,7 @@ import Base from "../layouts/Base.astro";
     <li>
       <span class="entry-title">Toy Soldiers</span>
       <p class="entry-desc">
-        A study of the origin of the components on a tiny whoop flight controller board. A tiny whoop is a small quadcopter (&lt;20g typically) with integrated radio controls and a video transmitter. A small miracle of embedded systems, the tiny whoop also demonstrates where so many of our chips come from. 
+        A study of the origin of the components on a tiny whoop flight controller board. A tiny whoop is a small quadcopter (&lt;20g typically) with integrated radio controls and a video transmitter. A small miracle of embedded systems, the tiny whoop also demonstrates where so many of our chips come from.
       </p>
     </li>
   </ul>
@@ -48,10 +95,5 @@ import Base from "../layouts/Base.astro";
   </p>
   <p>
     What do I believe at my core? A lot of things really, but in this space: that we have an imperative to build. I've noticed a distinct polarization in the world. In one view, there's a sort of creeping nihilism at work. A sense that people are helpless to change things around them. In another view, a techno-optimism that may be a little blind to the risks and humanity's history with unequally distributed outcomes. So where does that leave me? I'm a bit of a dreary optimist. I'm not sure how this all turns out, that's a matter of faith. But in the meantime, we must not bury our talents.
-  </p>
-
-  <p class="muted" style="margin-top:2rem;">
-    <a href="/projects">projects</a> · <a href="/lab">lab</a> ·
-    <a href="/writing">writing</a>
   </p>
 </Base>
