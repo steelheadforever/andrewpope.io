@@ -1,6 +1,6 @@
 ---
 title: "Introducing Birdseed"
-description: "Millennials can't afford a flashy mid-life crisis, so I'm building a cloudless bird feeder camera instead."
+description: "Can we fight the subscription models and build our own bird feeder cam?"
 date: 2026-06-16
 draft: false
 ---
