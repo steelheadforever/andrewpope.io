@@ -19,6 +19,8 @@ const fmt = (d: Date) =>
     year: "numeric",
     month: "short",
     day: "numeric",
+    // frontmatter dates parse as UTC midnight; format in UTC or they render a day early
+    timeZone: "UTC",
   });
 ---
 

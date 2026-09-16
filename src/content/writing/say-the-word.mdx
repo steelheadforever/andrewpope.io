@@ -1,8 +1,8 @@
 ---
 title: "Say The Word"
 description: "Using small models for small tasks"
-date: 2026-09-13
-draft: true
+date: 2026-09-16
+draft: false
 ---
 
 import AudiaryPipeline from "../../components/AudiaryPipeline.astro";
@@ -13,7 +13,7 @@ My Working Model projects pretty much all coalesce around a core idea: our phone
 
 This is a very simplified description of the Speechify/ElevenLabs stack, and the thing is, it works really well. The results are a very natural sounding output that hardly ever makes a mistake. I'm actually not here to disparage their products. If you truly care about the highest quality output, there's really no substitute. If you can tolerate a quality hit and don't want to pay a subscription though, on-device TTS is the right solution for you.
 
-And that's where Audiary sits. Audiary is my iOS app for on-device TTS using FluidAudio and Kokoro 82M to generate a fairly natural sounding voice output. All for a one-time purchase price. Bring text in from just about any source and listen immediately. No network connection needed, and the battery use is actually very minimal. The voices are good enough that you won't get robot voice fatigue, but there are some things that will definitely trip up the output. That LLM call I was referencing actually goes a long way to solving one of the most common problems though: heteronyms.
+And that's where [Audiary](https://workingmodel.cc/audiary) sits. Audiary is my iOS app for on-device TTS using FluidAudio and Kokoro 82M to generate a fairly natural sounding voice output. All for a one-time purchase price. Bring text in from just about any source and listen immediately. No network connection needed, and the battery use is actually very minimal. The voices are good enough that you won't get robot voice fatigue, but there are some things that will definitely trip up the output. That LLM call I was referencing actually goes a long way to solving one of the most common problems though: heteronyms.
 
 English has a high degree of heteronyms; those insidious words that are spelled exactly the same but are pronounced differently (and thus mean different things) depending on the context. And heteronyms stick out in Kokoro, as there's really no way to stop the model from just giving you its favorite phoneme pronunciation essentially. Left to itself, Kokoro gets them right 67.6% of the time. Importantly, as English is fairly rule based, we can already use the rules and Apple's text classifier to program some simple deterministic rules, and that takes it to 89.6%.
 
