@@ -1,0 +1,28 @@
+---
+title: "Say The Word"
+description: "Using small models for small tasks"
+date: 2026-09-13
+draft: true
+---
+
+import AudiaryPipeline from "../../components/AudiaryPipeline.astro";
+
+It's probably obvious that 'adding AI to app XYZ' is far from a novel idea in 2026. Consumer AI fatigue is real and yet we've only scratched the surface on consumer AI applications. Sorry, you've been warned. I like to think that my inclusion of an LLM call into one of my core apps is *actually* a pretty decent idea though. Let me explain.
+
+My Working Model projects pretty much all coalesce around a core idea: our phones have so much more horsepower than we use. And that means we can use them for a lot more without resorting to server calls, data usage, and subscription models. Text to Speech is one such example where the phone's processing can do a decent job. The TTS space is also pretty crowded, but a vast majority of these apps ship your text to a server for processing and returning your nice verbalized output.
+
+This is a very simplified description of the Speechify/ElevenLabs stack, and the thing is, it works really well. The results are a very natural sounding output that hardly ever makes a mistake. I'm actually not here to disparage their products. If you truly care about the highest quality output, there's really no substitute. If you can tolerate a quality hit and don't want to pay a subscription though, on-device TTS is the right solution for you.
+
+And that's where Audiary sits. Audiary is my iOS app for on-device TTS using FluidAudio and Kokoro 82M to generate a fairly natural sounding voice output. All for a one-time purchase price. Bring text in from just about any source and listen immediately. No network connection needed, and the battery use is actually very minimal. The voices are good enough that you won't get robot voice fatigue, but there are some things that will definitely trip up the output. That LLM call I was referencing actually goes a long way to solving one of the most common problems though: heteronyms.
+
+English has a high degree of heteronyms; those insidious words that are spelled exactly the same but are pronounced differently (and thus mean different things) depending on the context. And heteronyms stick out in Kokoro, as there's really no way to stop the model from just giving you its favorite phoneme pronunciation essentially. Left to itself, Kokoro gets them right 67.6% of the time. Importantly, as English is fairly rule based, we can already use the rules and Apple's text classifier to program some simple deterministic rules, and that takes it to 89.6%.
+
+The problem is that those remaining heteronyms really stick out. As in 'break you right out of the story' stick out. They're right at the confluence of all English speakers knowing them, but deterministic rules not identifying them. 'I'm going to read' a book vs 'I read a book yesterday' is a great example. The instrument (bass) vs the sportfish (bass) being another. Deterministic rules struggle. A non-deterministic correct answer is the perfect spot for an LLM to serve as an adjudicator.
+
+Thankfully, Apple actually ships devs a really great tool for this in the foundation model. The foundation model is a small LLM (3B params) that is native to Apple silicon and adds nothing to your app's download, it's just there (Apple pulls it down once when the user turns on Apple Intelligence). Waiting for you to bounce an idea off of it, or maybe ask it a question, like, is this sentence talking about the fish or the instrument? We prompt the model to only choose a response via a structured output, and we've got an answer that we can turn back into audio.
+
+<AudiaryPipeline />
+
+There's some hitches of course, and I'm not going to delve into all of the engineering, but the results are great. Putting the LLM adjudicator on top of those rules takes heteronym accuracy to **94.1%** against Google's WikipediaHomographData benchmark. Interestingly, there's two failure modes. One is just Apple's safeguards, which won't reason over certain inputs, like a sentence about child abuse, though it balks at plenty of ordinary political and religious sentences too. The other is just that the model gets it wrong. And that's reasonable, because really, we're asking an LLM (which doesn't use any audio..) to output what pronunciation makes sense using the rules captured in its training data. That's pretty fascinating and probably worth a separate discussion.
+
+For all the AI hype, hopefully this makes you think about where LLMs truly belong in software loops.

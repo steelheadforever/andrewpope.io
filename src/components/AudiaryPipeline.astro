@@ -1,0 +1,1280 @@
+---
+// Interactive figure: one sentence through Audiary's heteronym pipeline, from
+// text to a decision to voice. Blocks are navigable (click, Tab + Enter, or
+// ←/→); the panel under the map shows what the data looks like at that stage.
+// Everything shown comes from audiary-pipeline-data.ts.
+import { STEPS, STATS } from "./audiary-pipeline-data";
+
+const W = 88;
+const H = 60;
+const BLOCKS = [
+  { id: "text", n: "01", name: "Text", sub: "utterances", x: 12, y: 60 },
+  { id: "scan", n: "02", name: "Scan", sub: `${STATS.tableWords} words`, x: 152, y: 60 },
+  { id: "tag", n: "03", name: "Tag", sub: "NLTagger", x: 292, y: 60 },
+  { id: "rules", n: "04", name: "Rules", sub: "neighbours", x: 432, y: 60 },
+  { id: "route", n: "05", name: "Route", sub: "who decides", x: 572, y: 60 },
+  { id: "model", n: "06", name: "Model", sub: "on-device 3B", x: 690, y: 200 },
+  { id: "splice", n: "07", name: "Splice", sub: "phonemes", x: 812, y: 60 },
+  { id: "voice", n: "08", name: "Voice", sub: "Kokoro 82M", x: 952, y: 60, w: 116 },
+];
+
+// route: which decision path the edge belongs to (colours it when lit).
+const EDGES = [
+  { id: "text-scan", d: "M100 90 H150", route: "flow", tip: "150,90 142,86 142,94" },
+  { id: "scan-tag", d: "M240 90 H290", route: "flow", tip: "290,90 282,86 282,94" },
+  { id: "tag-rules", d: "M380 90 H430", route: "flow", tip: "430,90 422,86 422,94" },
+  { id: "rules-route", d: "M520 90 H570", route: "flow", tip: "570,90 562,86 562,94" },
+  { id: "route-splice", d: "M660 90 H810", route: "rules", tip: "810,90 802,86 802,94" },
+  { id: "route-model", d: "M616 120 C616 178 648 230 688 230", route: "model", tip: "688,230 680,226 680,234" },
+  { id: "model-splice", d: "M778 230 C830 230 856 178 856 122", route: "model", tip: "856,122 852,130 860,130" },
+  { id: "splice-voice", d: "M900 90 H950", route: "flow", tip: "950,90 942,86 942,94" },
+];
+---
+
+<figure class="ap" data-ap>
+  <div class="ap-controls">
+    <button type="button" data-act="prev" aria-label="Previous stage">← prev</button>
+    <button type="button" data-act="play" class="ap-play" aria-pressed="false">▶ play</button>
+    <button type="button" data-act="next" aria-label="Next stage">next →</button>
+    <span class="ap-count" aria-hidden="true">01 / {String(STEPS.length).padStart(2, "0")}</span>
+    <span class="ap-spacer"></span>
+    <label class="ap-toggle">
+      <input type="checkbox" data-act="assist" checked />
+      <span>Apple Intelligence Assist</span>
+    </label>
+  </div>
+
+  <div class="ap-mapwrap">
+    <svg
+      class="ap-map"
+      viewBox="0 0 1080 330"
+      role="group"
+      aria-label="Pipeline map. Text, scan, tag, rules and route run in order; route either lets the rules reading through to splice, or asks the on-device model, whose answer goes to splice; splice feeds the voice."
+    >
+      <g class="ap-edges">
+        {EDGES.map((e) => (
+          <g class={`ap-edge ap-edge--${e.route}`} data-edge={e.id}>
+            <path d={e.d} id={`ap-e-${e.id}`} />
+            <polygon points={e.tip} />
+          </g>
+        ))}
+      </g>
+
+      <g class="ap-edge-labels" aria-hidden="true">
+        <text x="736" y="80" text-anchor="middle" data-for="route-splice">rules reading</text>
+        <text x="606" y="186" text-anchor="end" data-for="route-model">ask</text>
+        <text x="866" y="186" text-anchor="start" data-for="model-splice">answer</text>
+        <text x="734" y="278" text-anchor="middle" class="ap-note">cached · refused → rules</text>
+      </g>
+
+      <g class="ap-brackets" aria-hidden="true">
+        <path d="M152 294 V302 H782 V294" />
+        <text x="467" y="320" text-anchor="middle">worker · runs ahead of playback</text>
+        <path d="M812 294 V302 H1068 V294" />
+        <text x="940" y="320" text-anchor="middle">synthesis · at playback</text>
+      </g>
+
+      <g class="ap-blocks">
+        {BLOCKS.map((b, i) => (
+          <g
+            class="ap-block"
+            data-block={b.id}
+            data-step={i}
+            tabindex="0"
+            role="button"
+            aria-label={`Stage ${b.n}: ${b.name}`}
+            transform={`translate(${b.x} ${b.y})`}
+          >
+            <rect width={b.w ?? W} height={H} rx="4" />
+            <text x="10" y="18" class="ap-block-n">{b.n}</text>
+            <text x="10" y="37" class="ap-block-name">{b.name}</text>
+            <text x="10" y="52" class="ap-block-sub">{b.sub}</text>
+          </g>
+        ))}
+      </g>
+
+      <g class="ap-tokens" aria-hidden="true"></g>
+    </svg>
+  </div>
+
+  <div class="ap-legend" aria-hidden="true">
+    <span><i class="ap-key ap-key--rules"></i>rules decide</span>
+    <span><i class="ap-key ap-key--model"></i>model decides</span>
+    <span class="ap-legend-hint">click a block, or use ← →</span>
+  </div>
+
+  <section class="ap-panel" aria-live="polite">
+    <header class="ap-panel-head">
+      <span class="ap-panel-n">01</span>
+      <h3 class="ap-panel-title">{STEPS[0].title}</h3>
+    </header>
+    <p class="ap-panel-summary">{STEPS[0].summary}</p>
+    <div class="ap-stage"></div>
+  </section>
+
+  <details class="ap-list">
+    <summary>The pipeline as a list</summary>
+    <ol>
+      {STEPS.map((s) => (
+        <li>
+          <strong>{s.name}.</strong> {s.summary}
+        </li>
+      ))}
+    </ol>
+  </details>
+
+  <figcaption>
+    One sentence through Audiary's heteronym pipeline. Tags, rule verdicts, routing, the prompt and the
+    model's answer are real output from the production code, run on macOS 26; the waveform is schematic.
+  </figcaption>
+</figure>
+
+<script>
+  import { SENTENCE, TOKENS, HITS, PROMPT, STATS, STEPS, type Hit } from "./audiary-pipeline-data";
+
+  type Kid = Node | string | null | false | undefined;
+  function h<K extends keyof HTMLElementTagNameMap>(tag: K, cls = "", ...kids: Kid[]): HTMLElementTagNameMap[K] {
+    const el = document.createElement(tag);
+    if (cls) el.className = cls;
+    for (const k of kids) if (k) el.append(k);
+    return el;
+  }
+  const stagger = <T extends HTMLElement>(el: T, i: number): T => {
+    el.style.setProperty("--i", String(i));
+    return el;
+  };
+  const meta = (...items: string[]) => h("ul", "ap-meta", ...items.map((t) => h("li", "", t)));
+  const code = (t: string, cls = "") => h("code", cls, t);
+  const pad = (n: number) => String(n + 1).padStart(2, "0");
+  const SVGNS = "http://www.w3.org/2000/svg";
+
+  // Edge → the step at which it lights up.
+  const EDGE_STEP: Record<string, number> = {
+    "text-scan": 1, "scan-tag": 2, "tag-rules": 3, "rules-route": 4,
+    "route-model": 5, "model-splice": 6, "route-splice": 6, "splice-voice": 7,
+  };
+  const MODEL_EDGES = new Set(["route-model", "model-splice"]);
+  const DWELL = [5000, 5500, 5500, 7000, 7000, 9500, 7000, 8000, 12000];
+
+  const final = (hit: Hit, assist: boolean) => (assist && hit.askModel ? hit.model! : hit.rules);
+  const decidedBy = (hit: Hit, assist: boolean) => (assist && hit.askModel ? "model" : "rules");
+
+  function init(root: HTMLElement) {
+    const svg = root.querySelector<SVGSVGElement>(".ap-map")!;
+    const tokenLayer = svg.querySelector<SVGGElement>(".ap-tokens")!;
+    const blocks = [...svg.querySelectorAll<SVGGElement>(".ap-block")];
+    const edges = [...svg.querySelectorAll<SVGGElement>(".ap-edge")];
+    const labels = [...svg.querySelectorAll<SVGTextElement>("[data-for]")];
+    const playBtn = root.querySelector<HTMLButtonElement>('[data-act="play"]')!;
+    const assistBox = root.querySelector<HTMLInputElement>('[data-act="assist"]')!;
+    const count = root.querySelector<HTMLElement>(".ap-count")!;
+    const pN = root.querySelector<HTMLElement>(".ap-panel-n")!;
+    const pTitle = root.querySelector<HTMLElement>(".ap-panel-title")!;
+    const pSummary = root.querySelector<HTMLElement>(".ap-panel-summary")!;
+    const stage = root.querySelector<HTMLElement>(".ap-stage")!;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let step = 0;
+    let assist = true;
+    let playing = false;
+    let playTimer = 0;
+    let cleanups: (() => void)[] = [];
+
+    const later = (fn: () => void, ms: number) => {
+      const t = window.setTimeout(fn, reduce ? 0 : ms);
+      cleanups.push(() => clearTimeout(t));
+    };
+    const every = (fn: () => void, ms: number) => {
+      const t = window.setInterval(fn, ms);
+      cleanups.push(() => clearInterval(t));
+    };
+    const frames = (fn: (now: number) => boolean) => {
+      let id = 0;
+      const tick = (now: number) => {
+        if (fn(now)) id = requestAnimationFrame(tick);
+      };
+      id = requestAnimationFrame(tick);
+      cleanups.push(() => cancelAnimationFrame(id));
+    };
+    const typeInto = (el: HTMLElement, text: string, msPerChar: number, done?: () => void) => {
+      if (reduce) {
+        el.textContent = text;
+        done?.();
+        return;
+      }
+      let i = 0;
+      const t = window.setInterval(() => {
+        i = Math.min(text.length, i + 2);
+        el.textContent = text.slice(0, i);
+        if (i >= text.length) {
+          clearInterval(t);
+          done?.();
+        }
+      }, msPerChar * 2);
+      cleanups.push(() => clearInterval(t));
+    };
+
+    // ---------- map ----------
+
+    function updateMap() {
+      root.dataset.step = String(step);
+      root.classList.toggle("is-assist-off", !assist);
+      root.classList.toggle("is-timing", step === STEPS.length - 1);
+      for (const b of blocks) {
+        const i = Number(b.dataset.step);
+        const skipped = b.dataset.block === "model" && !assist;
+        b.classList.toggle("is-active", i === step);
+        b.classList.toggle("is-visited", !skipped && (i < step || step === STEPS.length - 1));
+        b.classList.toggle("is-off", skipped);
+        b.setAttribute("aria-pressed", String(i === step));
+      }
+      for (const e of edges) {
+        const id = e.dataset.edge!;
+        const off = MODEL_EDGES.has(id) && !assist;
+        e.classList.toggle("is-lit", !off && step >= EDGE_STEP[id]);
+        e.classList.toggle("is-off", off);
+      }
+      for (const l of labels) {
+        const id = l.dataset.for!;
+        l.classList.toggle("is-lit", !(MODEL_EDGES.has(id) && !assist) && step >= EDGE_STEP[id]);
+      }
+      // Narrow screens scroll the map sideways; keep the active block in view.
+      const wrap = svg.parentElement!;
+      const active = blocks[step];
+      if (active && wrap.scrollWidth > wrap.clientWidth) {
+        const br = active.getBoundingClientRect();
+        const wr = wrap.getBoundingClientRect();
+        const left = wrap.scrollLeft + (br.left - wr.left) - (wr.width - br.width) / 2;
+        wrap.scrollTo({ left, behavior: reduce ? "auto" : "smooth" });
+      }
+    }
+
+    function pill(label: string, route: string) {
+      const g = document.createElementNS(SVGNS, "g");
+      g.setAttribute("class", `ap-pill ap-pill--${route}`);
+      const w = label.length * 6.6 + 18;
+      const r = document.createElementNS(SVGNS, "rect");
+      r.setAttribute("x", String(-w / 2));
+      r.setAttribute("y", "-10");
+      r.setAttribute("width", String(w));
+      r.setAttribute("height", "20");
+      r.setAttribute("rx", "10");
+      const t = document.createElementNS(SVGNS, "text");
+      t.setAttribute("text-anchor", "middle");
+      t.setAttribute("y", "4");
+      t.textContent = label;
+      g.append(r, t);
+      tokenLayer.append(g);
+      return g;
+    }
+
+    function travel(n: number) {
+      const bassToModel = assist;
+      const runs: { edge: string; label: string; route: string }[] =
+        n === 1 ? [{ edge: "text-scan", label: "utterance 0", route: "flow" }]
+        : n >= 2 && n <= 4 ? [{ edge: ["", "", "scan-tag", "tag-rules", "rules-route"][n], label: "bass · bow · read", route: "flow" }]
+        : n === 5 ? (bassToModel ? [{ edge: "route-model", label: "bass", route: "model" }] : [])
+        : n === 6 ? (bassToModel
+            ? [{ edge: "model-splice", label: "bass", route: "model" }, { edge: "route-splice", label: "bow · read", route: "rules" }]
+            : [{ edge: "route-splice", label: "bass · bow · read", route: "rules" }])
+        : n === 7 ? [{ edge: "splice-voice", label: "phonemes", route: "flow" }]
+        : [];
+      for (const run of runs) {
+        const path = svg.querySelector<SVGPathElement>(`#ap-e-${run.edge}`)!;
+        const len = path.getTotalLength();
+        const g = pill(run.label, run.route);
+        const dur = Math.max(900, len * 7);
+        let t0 = 0;
+        frames((now) => {
+          t0 ||= now;
+          const k = Math.min(1, (now - t0) / dur);
+          const e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+          const p = path.getPointAtLength(e * len);
+          g.setAttribute("transform", `translate(${p.x} ${p.y})`);
+          g.style.opacity = String(k < 0.1 ? k * 10 : k > 0.85 ? (1 - k) / 0.15 : 1);
+          if (k >= 1) g.remove();
+          return k < 1;
+        });
+        cleanups.push(() => g.remove());
+      }
+    }
+
+    // ---------- panel stages ----------
+
+    function sentenceSpans(cls: (hit: boolean, i: number) => string) {
+      return h(
+        "p",
+        "ap-sent",
+        ...TOKENS.flatMap((t, i) => [
+          stagger(h("span", cls(Boolean(t.hit), i), t.w), i),
+          i < TOKENS.length - 1 ? " " : ".",
+        ]),
+      );
+    }
+
+    const stages: (() => HTMLElement)[] = [
+      // 01 text
+      () => {
+        const out = h("span", "");
+        const term = h("div", "ap-term", h("span", "ap-sigil", "› "), out, h("span", "cursor"));
+        typeInto(out, SENTENCE, 26);
+        return h(
+          "div", "",
+          term,
+          meta(`utterance 0 · ${SENTENCE.length} chars`, `first utterance ≤ ${STATS.firstChars} chars`, `then grouped up to ${STATS.maxChars}`, "split at . ! ?"),
+        );
+      },
+
+      // 02 scan
+      () =>
+        h(
+          "div", "",
+          h("div", "ap-scan", sentenceSpans((hit) => (hit ? "ap-w ap-hit" : "ap-w"))),
+          meta(`${STATS.tableWords}-word heteronym table`, "lowercase substring check", `${HITS.length} hits`, "no hit → nothing below runs"),
+        ),
+
+      // 03 tag
+      () =>
+        h(
+          "div", "",
+          h(
+            "div", "ap-tags",
+            ...TOKENS.map((t, i) =>
+              stagger(h("span", `ap-tagcol${t.hit ? " is-hit" : ""}`, h("span", "ap-tag-w", t.w), h("span", "ap-tag-t", t.tag)), i),
+            ),
+          ),
+          meta("NLTagger · lexical class", "part of speech only", "no tense · no meaning"),
+        ),
+
+      // 04 rules
+      () => {
+        const rows = HITS.map((hit, i) =>
+          stagger(
+            h(
+              "tr", "",
+              h("td", "", code(hit.word)),
+              h("td", "", hit.tag),
+              h("td", "", hit.rule),
+              h(
+                "td", "",
+                code(hit.rules.ipa), ` ${hit.rules.rhyme}`,
+                hit.rulesWrong ? h("span", "ap-wrong", `✗ ${hit.rules.sense}`) : null,
+              ),
+              h("td", hit.confident ? "" : "ap-dim", hit.confident ? "yes" : "no"),
+            ),
+            i,
+          ),
+        );
+        return h(
+          "div", "",
+          h(
+            "div", "ap-tablewrap",
+            h(
+              "table", "ap-table",
+              h("thead", "", h("tr", "", ...["word", "tagger", "rule that fired", "reading", "confident"].map((c) => h("th", "", c)))),
+              h("tbody", "", ...rows),
+            ),
+          ),
+          meta("hand-written tense rules", "sense cues for bow", "tagger fallback otherwise", "unsure → keep the default"),
+        );
+      },
+
+      // 05 route
+      () => {
+        const items = HITS.map((hit, i) => {
+          const by = decidedBy(hit, assist);
+          const verdict =
+            hit.askModel && !assist ? "Assist off → rules decide" : by === "model" ? "ask the model" : "rules decide";
+          return stagger(
+            h(
+              "li", "ap-route",
+              code(hit.word),
+              h("span", "ap-chip", `mode: ${hit.mode}`),
+              h("span", "ap-route-why", hit.routeNote),
+              h("span", "ap-route-to", h("i", `ap-key ap-key--${by}`), verdict),
+            ),
+            i,
+          );
+        });
+        const r = STATS.routing;
+        return h(
+          "div", "",
+          h("ul", "ap-routes", ...items),
+          meta(`benchmark words: ${r.rules} rules only · ${r.silent} ask when unsure · ${r.model} always ask`, "routing chosen on the training split"),
+        );
+      },
+
+      // 06 model
+      () => {
+        const bass = HITS.find((x) => x.askModel)!;
+        if (!assist) {
+          return h(
+            "div", "ap-offnote",
+            h("p", "", "Assist is off, so the model is never asked. ", code(bass.word), " keeps the rules reading: ", code(bass.rules.ipa), ` ${bass.rules.rhyme}`, h("span", "ap-wrong", `✗ ${bass.rules.sense}`)),
+            meta("same as Audiary 1.x", "and on devices without Apple Intelligence"),
+          );
+        }
+        const pre = h("pre", "ap-prompt-body");
+        const opts = PROMPT.options.map((o) => h("li", "", h("span", "ap-radio"), o.gloss));
+        const optList = h("ol", "ap-opts", ...opts);
+        const result = h(
+          "div", "ap-result",
+          h("i", "ap-key ap-key--model"),
+          "→ ", code(bass.model!.ipa), ` ${bass.model!.rhyme}`,
+          h("span", "ap-ms", `${PROMPT.ms} ms`),
+        );
+        typeInto(pre, PROMPT.text, 9, () => {
+          optList.classList.add("is-deciding");
+          later(() => {
+            PROMPT.options.forEach((o, i) => opts[i].classList.add(o.chosen ? "is-chosen" : "is-dropped"));
+            result.classList.add("is-in");
+          }, 900);
+        });
+        return h(
+          "div", "",
+          h("div", "ap-prompt", h("div", "ap-prompt-label", "prompt, exactly as sent"), pre),
+          h("div", "ap-decode", h("div", "ap-prompt-label", "output constrained to one of"), optList),
+          result,
+          meta("on device · offline", "no IPA in the prompt", "gloss out → IPA mapped back", `~${STATS.refusedPct}% refused → rules reading`, "cached per utterance"),
+        );
+      },
+
+      // 07 splice
+      () => {
+        const ipaOf = (i: number) => {
+          const t = TOKENS[i];
+          const hit = t.hit ? HITS.find((x) => x.word === t.hit)! : null;
+          return hit ? final(hit, assist).ipa : t.ipa;
+        };
+        const chips = TOKENS.map((t, i) => {
+          const hit = t.hit ? HITS.find((x) => x.word === t.hit)! : null;
+          const by = hit ? decidedBy(hit, assist) : "";
+          const byLabel = hit ? h("span", "ap-ph-by", by) : null;
+          if (hit && byLabel && !assist && hit.rulesWrong) {
+            byLabel.textContent = `✗ ${hit.rules.sense}`;
+            byLabel.style.color = "var(--red)";
+            byLabel.style.whiteSpace = "nowrap";
+          }
+          return stagger(
+            h(
+              "span", `ap-ph${hit ? ` is-forced ap-ph--${by}` : ""}`,
+              h("span", "ap-ph-w", t.w),
+              h("span", "ap-ph-p", ipaOf(i)),
+              byLabel,
+            ),
+            i,
+          );
+        });
+        return h(
+          "div", "",
+          h("div", "ap-phrow", ...chips),
+          h("p", "ap-phline", code(TOKENS.map((_, i) => ipaOf(i)).join(" ") + ".")),
+          meta("other words: lexicon phonemes, unchanged", "forced readings dropped into their slots", `under the ${STATS.phonemeCap}-phoneme cap`, "G2P bypassed"),
+        );
+      },
+
+      // 08 voice
+      () => {
+        const weights = TOKENS.map((t, i) => {
+          const hit = t.hit ? HITS.find((x) => x.word === t.hit)! : null;
+          return (hit ? final(hit, assist).ipa : t.ipa).length + 2;
+        });
+        const total = weights.reduce((a, b) => a + b, 0);
+        const BARS = 72;
+        const wave = h("div", "ap-wave");
+        let acc = 0;
+        const wordStarts = weights.map((w) => {
+          const s = acc / total;
+          acc += w;
+          return s;
+        });
+        for (let b = 0; b < BARS; b++) {
+          const x = b / BARS;
+          let wi = wordStarts.findLastIndex((s) => s <= x);
+          const local = (x - wordStarts[wi]) / (weights[wi] / total);
+          const envelope = Math.sin(Math.PI * Math.min(1, Math.max(0, local))) ** 0.7;
+          const jitter = 0.55 + 0.45 * Math.abs(Math.sin(b * 12.9898) * 43758.5453 % 1);
+          const bar = h("span", "");
+          bar.style.height = `${Math.max(6, envelope * jitter * 100)}%`;
+          wave.append(bar);
+        }
+        const head = h("span", "ap-playhead");
+        wave.append(head);
+        const words = TOKENS.map((t, i) => {
+          const hit = t.hit ? HITS.find((x) => x.word === t.hit)! : null;
+          const rhyme = hit ? final(hit, assist).rhyme.replace("rhymes with ", "≈ ") : "";
+          const el = h("span", `ap-vw${hit ? " is-forced" : ""}`, t.w, hit ? h("small", "", rhyme) : null);
+          el.style.flexGrow = String(weights[i]);
+          return el;
+        });
+        const row = h("div", "ap-vwords", ...words);
+        if (!reduce) {
+          const PERIOD = 4200;
+          const REST = 900;
+          let t0 = 0;
+          frames((now) => {
+            t0 ||= now;
+            const t = (now - t0) % (PERIOD + REST);
+            const k = Math.min(1, t / PERIOD);
+            head.style.left = `${k * 100}%`;
+            head.style.opacity = t > PERIOD ? "0" : "1";
+            const wi = t > PERIOD ? -1 : wordStarts.findLastIndex((s) => s <= k);
+            words.forEach((w, i) => w.classList.toggle("is-now", i === wi));
+            return true;
+          });
+        }
+        return h(
+          "div", "",
+          h("div", "ap-voice", wave, row),
+          h("p", "ap-schematic", "schematic waveform"),
+          meta("Kokoro 82M · Core ML · on device", "24 kHz WAV", "levelled to −22 dBFS", "gapless handoff to the next utterance"),
+        );
+      },
+
+      // 09 timing
+      () => {
+        const CELLS = 56;
+        const cells = Array.from({ length: CELLS }, (_, i) => h("span", "ap-cell", h("i", "")));
+        // Utterances where a heteronym needed a model call — sparse, fixed.
+        const calls = new Set([1, 6, 9, 15, 22, 27, 31, 38, 44, 50]);
+        const strip = h("div", "ap-strip", ...cells);
+        const note = h("p", "ap-strip-note", "");
+        let play = 0;
+        let answered = 0;
+        const paint = () => {
+          const win = play + STATS.lookahead;
+          cells.forEach((c, i) => {
+            c.className = "ap-cell";
+            if (i < play) c.classList.add("is-played");
+            else if (i === play) c.classList.add("is-playing");
+            else if (i === play + 1) c.classList.add("is-rendering");
+            if (i >= play && i < answered) c.classList.add("is-answered");
+            if (i >= play && i < answered && calls.has(i)) c.classList.add("has-call");
+            if (i === win) c.classList.add("is-window-end");
+          });
+          note.textContent = `schematic · playhead: utterance ${play} · answered through ${Math.max(play, answered - 1)} · window ends at ${win}`;
+        };
+        if (reduce) {
+          play = 4;
+          answered = play + STATS.lookahead;
+          paint();
+        } else {
+          let ticks = 0;
+          paint();
+          every(() => {
+            ticks++;
+            if (answered < play + STATS.lookahead) answered++;
+            if (ticks % 14 === 0) play++;
+            if (play > 14) {
+              play = 0;
+              answered = 0;
+            }
+            paint();
+          }, 110);
+        }
+        const tile = (value: string, label: string) => h("div", "ap-tile", h("span", "ap-tile-v", value), h("span", "ap-tile-l", label));
+        return h(
+          "div", "",
+          h("div", "ap-tiles", tile(`~${STATS.callSec} s`, "per model call"), tile(`~${STATS.utteranceSec} s`, "of audio per utterance"), tile(String(STATS.lookahead), `utterances ahead (~${STATS.lookaheadMin} min)`), tile(`~${STATS.callsPerHour}`, "model calls per listening hour")),
+          strip,
+          note,
+          h(
+            "div", "ap-strip-legend",
+            h("span", "", h("i", "ap-cell is-played"), "played"),
+            h("span", "", h("i", "ap-cell is-playing"), "playing"),
+            h("span", "", h("i", "ap-cell is-rendering"), "rendering next"),
+            h("span", "", h("i", "ap-cell is-answered"), "answered by worker"),
+            h("span", "", h("i", "ap-cell is-answered has-call"), "model was asked"),
+          ),
+          meta("starts when a document opens, before play", "synthesis never waits: not ready → rules", "idle once the window is answered"),
+        );
+      },
+    ];
+
+    // ---------- navigation ----------
+
+    function go(n: number, animate = true) {
+      cleanups.forEach((f) => f());
+      cleanups = [];
+      const prev = step;
+      step = Math.max(0, Math.min(STEPS.length - 1, n));
+      const s = STEPS[step];
+      count.textContent = `${pad(step)} / ${String(STEPS.length).padStart(2, "0")}`;
+      pN.textContent = pad(step);
+      pTitle.textContent = s.title;
+      pSummary.textContent = s.summary;
+      stage.replaceChildren(stages[step]());
+      updateMap();
+      if (animate && !reduce && step === prev + 1) travel(step);
+      if (playing) schedule();
+    }
+
+    function schedule() {
+      clearTimeout(playTimer);
+      playTimer = window.setTimeout(() => {
+        if (step >= STEPS.length - 1) setPlaying(false);
+        else go(step + 1);
+      }, DWELL[step]);
+    }
+
+    function setPlaying(on: boolean) {
+      playing = on;
+      playBtn.setAttribute("aria-pressed", String(on));
+      playBtn.textContent = on ? "❚❚ pause" : step >= STEPS.length - 1 ? "↺ replay" : "▶ play";
+      clearTimeout(playTimer);
+      if (on) {
+        if (step >= STEPS.length - 1) go(0, false);
+        else schedule();
+      }
+    }
+
+    root.addEventListener("click", (ev) => {
+      const t = ev.target as Element;
+      const act = t.closest<HTMLElement>("[data-act]")?.dataset.act;
+      if (act === "prev") { setPlaying(false); go(step - 1, false); }
+      else if (act === "next") { setPlaying(false); go(step + 1); }
+      else if (act === "play") setPlaying(!playing);
+      const block = t.closest<SVGGElement>(".ap-block");
+      if (block) { setPlaying(false); go(Number(block.dataset.step)); }
+    });
+    svg.addEventListener("keydown", (ev) => {
+      const block = (ev.target as Element).closest<SVGGElement>(".ap-block");
+      if (block && (ev.key === "Enter" || ev.key === " ")) {
+        ev.preventDefault();
+        setPlaying(false);
+        go(Number(block.dataset.step));
+      }
+    });
+    root.addEventListener("keydown", (ev) => {
+      if ((ev.target as Element).matches("input")) return;
+      if (ev.key === "ArrowRight") { ev.preventDefault(); setPlaying(false); go(step + 1); }
+      if (ev.key === "ArrowLeft") { ev.preventDefault(); setPlaying(false); go(step - 1, false); }
+    });
+    assistBox.addEventListener("change", () => {
+      assist = assistBox.checked;
+      go(step, false);
+    });
+
+    go(0, false);
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-ap]").forEach(init);
+</script>
+
+<style is:global>
+  .ap {
+    --ap-rules: #b9863c; /* validated pair on --bg: rules path */
+    --ap-model: #3f8fd9; /* model path */
+    --ap-w: min(66rem, calc(100vw - 2.5rem));
+    width: var(--ap-w);
+    margin: 2.5rem 0 2.5rem calc(50% - var(--ap-w) / 2);
+    padding: 0;
+    font-size: 0.85rem;
+  }
+  @media (min-width: 44rem) {
+    /* the prose column sits left of the page centre; centre the figure on the page */
+    .ap {
+      margin-left: calc(50% - var(--ap-w) / 2 + 1.75rem);
+    }
+  }
+
+  /* controls */
+  .ap-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+  }
+  .ap-controls button {
+    font: inherit;
+    font-size: 0.8rem;
+    color: var(--fg);
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.25rem 0.65rem;
+    cursor: pointer;
+  }
+  .ap-controls button:hover,
+  .ap-controls button:focus-visible {
+    border-color: var(--amber-dim);
+    color: var(--amber);
+    outline: none;
+  }
+  .ap-count {
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin-left: 0.3rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .ap-spacer {
+    flex: 1;
+  }
+  .ap-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .ap-toggle input {
+    accent-color: var(--ap-model);
+  }
+
+  /* map */
+  .ap-mapwrap {
+    overflow-x: auto;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--bg-soft) 60%, var(--bg));
+    background-image: radial-gradient(color-mix(in srgb, var(--rule) 70%, transparent) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  .ap-map {
+    display: block;
+    width: 100%;
+    min-width: 760px;
+    height: auto;
+    font-family: var(--font-mono);
+  }
+
+  .ap-edge path {
+    fill: none;
+    stroke: var(--rule);
+    stroke-width: 2;
+    stroke-linecap: round;
+    transition: stroke 0.35s ease, opacity 0.35s ease;
+  }
+  .ap-edge polygon {
+    fill: var(--rule);
+    transition: fill 0.35s ease, opacity 0.35s ease;
+  }
+  .ap-edge--flow.is-lit path { stroke: var(--muted); }
+  .ap-edge--flow.is-lit polygon { fill: var(--muted); }
+  .ap-edge--rules.is-lit path { stroke: var(--ap-rules); }
+  .ap-edge--rules.is-lit polygon { fill: var(--ap-rules); }
+  .ap-edge--model.is-lit path { stroke: var(--ap-model); }
+  .ap-edge--model.is-lit polygon { fill: var(--ap-model); }
+  .ap-edge.is-off { opacity: 0.25; }
+
+  .ap-edge-labels text,
+  .ap-brackets text {
+    font-size: 11px;
+    fill: var(--muted);
+    transition: fill 0.35s ease, opacity 0.35s ease;
+  }
+  .ap-edge-labels text[data-for]:not(.is-lit) { opacity: 0.45; }
+  .ap-edge-labels text.is-lit { fill: var(--fg); }
+  .ap-edge-labels .ap-note { font-size: 10px; }
+  .is-assist-off .ap-edge-labels .ap-note { opacity: 0.3; }
+
+  .ap-brackets path {
+    fill: none;
+    stroke: var(--rule);
+    stroke-width: 1;
+    transition: stroke 0.35s ease;
+  }
+  .ap-brackets text { opacity: 0.6; }
+  .is-timing .ap-brackets path { stroke: var(--amber-dim); }
+  .is-timing .ap-brackets text { fill: var(--fg); opacity: 1; }
+
+  .ap-block {
+    cursor: pointer;
+    outline: none;
+  }
+  .ap-block rect {
+    fill: var(--bg);
+    stroke: var(--rule);
+    stroke-width: 1;
+    transition: stroke 0.3s ease, fill 0.3s ease, filter 0.3s ease;
+  }
+  .ap-block text { pointer-events: none; }
+  .ap-block-n { font-size: 10px; fill: var(--muted); letter-spacing: 0.06em; }
+  .ap-block-name { font-size: 13px; font-weight: 600; fill: var(--muted); transition: fill 0.3s ease; }
+  .ap-block-sub { font-size: 10px; fill: var(--muted); opacity: 0.8; }
+  .ap-block:hover rect,
+  .ap-block:focus-visible rect { stroke: var(--amber-dim); }
+  .ap-block.is-visited rect { stroke: var(--muted); }
+  .ap-block.is-visited .ap-block-name { fill: var(--fg); }
+  .ap-block.is-active rect {
+    stroke: var(--amber);
+    stroke-width: 1.5;
+    fill: var(--bg-soft);
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--amber) 45%, transparent));
+  }
+  .ap-block.is-active .ap-block-name { fill: var(--amber); }
+  .ap-block[data-block="model"].is-visited rect,
+  .ap-block[data-block="model"].is-active rect { stroke: var(--ap-model); }
+  .ap-block[data-block="model"].is-active {
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--ap-model) 45%, transparent));
+  }
+  .ap-block.is-off { opacity: 0.35; }
+
+  .ap-pill rect {
+    fill: var(--bg);
+    stroke: var(--muted);
+    stroke-width: 1.5;
+  }
+  .ap-pill--rules rect { stroke: var(--ap-rules); }
+  .ap-pill--model rect { stroke: var(--ap-model); }
+  .ap-pill text {
+    font-size: 11px;
+    fill: var(--fg);
+  }
+
+  /* legend */
+  .ap-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.2rem;
+    margin: 0.55rem 0 1rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .ap-legend > span { display: inline-flex; align-items: center; gap: 0.45rem; }
+  .ap-legend-hint { margin-left: auto; opacity: 0.75; }
+  .ap-key {
+    display: inline-block;
+    width: 1.1rem;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--muted);
+    flex: none;
+  }
+  .ap-key--rules { background: var(--ap-rules); }
+  .ap-key--model { background: var(--ap-model); }
+
+  /* panel */
+  .ap-panel {
+    border-top: 1px solid var(--rule);
+    padding-top: 1rem;
+    min-height: 24rem; /* enough that short stages don't shift the prose below much */
+  }
+  /* undo article.prose pre, which would box the prompt twice */
+  .ap pre.ap-prompt-body {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    overflow: visible;
+  }
+  .ap-panel-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+  }
+  .ap-panel-n {
+    color: var(--amber);
+    font-size: 0.78rem;
+  }
+  .ap .ap-panel-title {
+    margin: 0;
+    font-size: 1rem;
+  }
+  .ap-panel-summary {
+    color: var(--muted);
+    max-width: 44rem;
+    margin: 0.35rem 0 1rem;
+  }
+  .ap-stage > div > * + * { margin-top: 0.9rem; }
+
+  .ap-meta {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.5rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .ap-meta li {
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 0.05rem 0.45rem;
+  }
+
+  @keyframes ap-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* 01 text */
+  .ap-term {
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+    color: var(--fg);
+    min-height: 3.2rem;
+  }
+  .ap-sigil { color: var(--amber); }
+
+  /* 02 scan */
+  .ap-scan {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.8rem 1rem;
+  }
+  .ap-scan::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3rem;
+    left: -3rem;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--amber) 22%, transparent), transparent);
+    animation: ap-sweep 1.6s ease-in-out 0.2s 1 forwards;
+  }
+  @keyframes ap-sweep { to { left: 100%; } }
+  .ap-sent {
+    margin: 0;
+    font-size: 1rem;
+    max-width: none;
+  }
+  .ap-w { color: var(--muted); }
+  .ap-hit {
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    animation: ap-hit 0.3s ease forwards;
+    animation-delay: calc(0.2s + var(--i) * 0.13s);
+  }
+  @keyframes ap-hit {
+    to { color: var(--fg); border-color: var(--amber); }
+  }
+
+  /* 03 tag */
+  .ap-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .ap-tagcol {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.35rem 0.55rem;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    opacity: 0;
+    animation: ap-in 0.35s ease forwards;
+    animation-delay: calc(var(--i) * 0.08s);
+  }
+  .ap-tag-w { color: var(--muted); }
+  .ap-tag-t { font-size: 0.68rem; color: var(--muted); text-transform: lowercase; }
+  .ap-tagcol.is-hit { border-color: var(--amber-dim); }
+  .ap-tagcol.is-hit .ap-tag-w { color: var(--fg); }
+  .ap-tagcol.is-hit .ap-tag-t { color: var(--amber); }
+
+  /* 04 rules */
+  .ap-tablewrap { overflow-x: auto; }
+  .ap-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.8rem;
+  }
+  .ap-table th {
+    text-align: left;
+    font-weight: 400;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--rule);
+    padding: 0.3rem 0.8rem 0.3rem 0;
+  }
+  .ap-table td {
+    padding: 0.5rem 0.8rem 0.5rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  .ap-table tbody tr {
+    opacity: 0;
+    animation: ap-in 0.4s ease forwards;
+    animation-delay: calc(0.1s + var(--i) * 0.35s);
+  }
+  .ap-dim { color: var(--muted); }
+  .ap-wrong {
+    color: var(--red);
+    margin-left: 0.5rem;
+    font-size: 0.78em;
+    white-space: nowrap;
+  }
+
+  /* 05 route */
+  .ap-routes {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .ap-route {
+    display: grid;
+    grid-template-columns: 4rem 8.5rem 1fr auto;
+    gap: 0.3rem 0.8rem;
+    align-items: baseline;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--rule);
+    opacity: 0;
+    animation: ap-in 0.4s ease forwards;
+    animation-delay: calc(0.1s + var(--i) * 0.35s);
+  }
+  .ap-chip {
+    font-size: 0.72rem;
+    color: var(--muted);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 0 0.4rem;
+    justify-self: start;
+  }
+  .ap-route-why { color: var(--muted); font-size: 0.8rem; }
+  .ap-route-to { display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+  @media (max-width: 40rem) {
+    .ap-route { grid-template-columns: 4rem 1fr; }
+    .ap-route-why, .ap-route-to { grid-column: 2; }
+  }
+
+  /* 06 model */
+  .ap-prompt,
+  .ap-decode {
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-left: 2px solid var(--ap-model);
+    border-radius: 3px;
+    padding: 0.6rem 0.9rem;
+  }
+  .ap-prompt-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+  }
+  .ap-prompt-body {
+    margin: 0;
+    white-space: pre-wrap;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--fg);
+    min-height: 7.5em;
+  }
+  .ap-opts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.8rem;
+  }
+  .ap-opts li {
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.2rem 0;
+    color: var(--muted);
+    transition: color 0.3s ease, opacity 0.3s ease;
+  }
+  .ap-radio {
+    flex: none;
+    width: 0.7rem;
+    height: 0.7rem;
+    margin-top: 0.35rem;
+    border: 1px solid var(--muted);
+    border-radius: 50%;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .ap-opts.is-deciding li:not(.is-chosen):not(.is-dropped) .ap-radio {
+    animation: ap-blink 0.45s steps(1) infinite;
+  }
+  @keyframes ap-blink { 50% { border-color: var(--ap-model); } }
+  .ap-opts li.is-chosen { color: var(--fg); }
+  .ap-opts li.is-chosen .ap-radio { background: var(--ap-model); border-color: var(--ap-model); }
+  .ap-opts li.is-dropped { opacity: 0.4; text-decoration: line-through; text-decoration-color: var(--rule); }
+  .ap-result {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .ap-result.is-in { opacity: 1; }
+  .ap-ms { color: var(--muted); font-size: 0.75rem; margin-left: 0.4rem; }
+  .ap-offnote p { max-width: none; }
+
+  /* 07 splice */
+  .ap-phrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem 0.4rem;
+  }
+  .ap-ph {
+    position: relative;
+    display: inline-grid;
+    padding: 0.3rem 0.5rem 0.35rem;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    min-width: 2rem;
+    text-align: center;
+  }
+  .ap-ph-w,
+  .ap-ph-p {
+    grid-area: 1 / 1;
+    animation-duration: 0.35s;
+    animation-fill-mode: forwards;
+    animation-delay: calc(0.3s + var(--i) * 0.16s);
+  }
+  .ap-ph-w { color: var(--muted); animation-name: ap-out; }
+  .ap-ph-p { color: var(--fg); opacity: 0; animation-name: ap-in; }
+  @keyframes ap-out { to { opacity: 0; transform: translateY(-4px); } }
+  .ap-ph.is-forced { border-bottom-width: 2px; }
+  .ap-ph--rules { border-bottom-color: var(--ap-rules); }
+  .ap-ph--model { border-bottom-color: var(--ap-model); }
+  .ap-ph-by {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    font-size: 0.6rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .ap-phline { margin: 1.4rem 0 0; max-width: none; }
+  .ap-phline code { color: var(--fg); font-size: 0.9rem; }
+
+  /* 08 voice */
+  .ap-voice {
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.8rem 1rem 0.5rem;
+  }
+  .ap-wave {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 4.5rem;
+  }
+  .ap-wave > span:not(.ap-playhead) {
+    flex: 1;
+    background: var(--muted); /* neutral: amber would read as "rules path" */
+    border-radius: 2px;
+    opacity: 0.6;
+  }
+  .ap-playhead {
+    position: absolute;
+    top: -0.3rem;
+    bottom: -0.3rem;
+    width: 1px;
+    left: 0;
+    background: var(--fg);
+    box-shadow: 0 0 6px var(--amber);
+  }
+  .ap-vwords {
+    display: flex;
+    margin-top: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .ap-vwords > span {
+    flex-basis: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    transition: color 0.12s ease;
+  }
+  .ap-vwords small { font-size: 0.62rem; opacity: 0; transition: opacity 0.15s ease; }
+  .ap-vwords .is-now { color: var(--amber); }
+  .ap-vwords .is-forced.is-now small,
+  .ap-vwords .is-forced small { opacity: 0.85; }
+  .ap-schematic { font-size: 0.68rem; color: var(--muted); margin: 0.3rem 0 0; }
+
+  /* 09 timing */
+  .ap-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: 0.5rem;
+  }
+  .ap-tile {
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.5rem 0.7rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .ap-tile-v { font-size: 1.25rem; font-weight: 600; color: var(--fg); }
+  .ap-tile-l { font-size: 0.7rem; color: var(--muted); }
+  .ap-strip {
+    display: grid;
+    grid-template-columns: repeat(56, 1fr);
+    gap: 2px;
+  }
+  .ap-cell {
+    position: relative;
+    display: inline-block;
+    height: 1.6rem;
+    border-radius: 2px;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+  }
+  .ap-cell.is-played { background: var(--rule); border-color: var(--rule); }
+  .ap-cell.is-answered { background: var(--bg-soft); border-color: var(--muted); }
+  .ap-cell.is-playing { background: var(--fg); border-color: var(--fg); }
+  .ap-cell.is-rendering { border-color: var(--amber); }
+  .ap-cell.has-call::after {
+    content: "";
+    position: absolute;
+    left: 20%;
+    right: 20%;
+    bottom: 3px;
+    height: 3px;
+    border-radius: 1px;
+    background: var(--ap-model);
+  }
+  .ap-cell.is-window-end { box-shadow: 3px 0 0 -1px var(--amber-dim); }
+  .ap-strip-note {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin: 0.4rem 0 0;
+    font-variant-numeric: tabular-nums;
+    max-width: none;
+  }
+  .ap-strip-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .ap-strip-legend > span { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .ap-strip-legend .ap-cell { width: 0.9rem; height: 1rem; }
+
+  /* static text twin + caption */
+  .ap-list {
+    margin-top: 1.2rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .ap-list summary { cursor: pointer; }
+  .ap-list summary:hover { color: var(--amber); }
+  .ap-list ol { padding-left: 1.4rem; max-width: 44rem; }
+  .ap-list li { margin: 0.3rem 0; }
+  .ap-list strong { color: var(--fg); font-weight: 600; }
+  .ap figcaption {
+    margin-top: 0.8rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    max-width: 44rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ap *,
+    .ap *::after {
+      animation-duration: 0.001s !important;
+      animation-delay: 0s !important;
+      transition: none !important;
+    }
+  }
+</style>
